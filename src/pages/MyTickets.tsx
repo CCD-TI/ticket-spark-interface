@@ -408,13 +408,17 @@ const MyTicketsPage = () => {
                   <div className="flex-1">
                     <Label className="text-sm md:text-base font-semibold text-white">Tipo de Problema</Label>
                     <p className="text-gray-300 mt-1 text-sm md:text-base">
-                      {selectedTicket.tipo_problema_id?.nombre || 'No especificado'}
+                      {typeof selectedTicket.tipo_problema_id === 'object' 
+                        ? selectedTicket.tipo_problema_id?.nombre 
+                        : 'No especificado'}
                     </p>
                   </div>
                   <div className="flex-1">
                     <Label className="text-sm md:text-base font-semibold text-white">Proyecto</Label>
                     <p className="text-gray-300 mt-1 text-sm md:text-base">
-                      {selectedTicket.proyecto_id?.nombre || 'No especificado'}
+                      {typeof selectedTicket.proyecto_id === 'object' 
+                        ? selectedTicket.proyecto_id?.nombre 
+                        : 'No especificado'}
                     </p>
                   </div>
                 </div>

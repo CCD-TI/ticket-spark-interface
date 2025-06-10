@@ -10,16 +10,28 @@ export interface TicketResponse {
 }
 
 // Estructura de un ticket (ajustada al backend y al frontend)
+interface Proyecto {
+  id: number;
+  nombre: string;
+  [key: string]: any;
+}
+
+interface TipoProblema {
+  id: number;
+  nombre: string;
+  [key: string]: any;
+}
+
 export interface ITicket {
   id: string;
   asunto: string;
   descripcion: string;
-  tipo_problema_id: number;
-  proyecto_id: number;
+  tipo_problema_id: number | TipoProblema;
+  proyecto_id: number | Proyecto;
   status: string;
   priority?: Priority;
   created_at: string; // ISO string
-  response?: string; // este campo ya lo estás usando como string plano
+  response?: string;
   responded_at?: string;
   user_id: string;
   ticket_responses?: TicketResponse[];
