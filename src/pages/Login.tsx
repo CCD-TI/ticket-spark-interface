@@ -1,12 +1,15 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { LogIn, Ticket, Eye, EyeOff } from "lucide-react";
+import { LogIn, Ticket, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmail, signInWithGoogle, supabase } from "@/lib/supabase";
+import { FcGoogle } from "react-icons/fc";
+import { getUserRoleFromSession } from "@/lib/auth";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -15,155 +18,115 @@ const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.email || !formData.password) {
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await signInWithGoogle();
+
+      if (error) throw error;
+
+      // No necesitamos redirigir manualmente aquí
+      // El AuthWrapper manejará la redirección
+    } catch (error) {
+      console.error('Error al iniciar sesión con Google:', error);
       toast({
-        title: "Error de validación",
-        description: "Por favor completa todos los campos.",
+        title: "Error de autenticación",
+        description: "Ocurrió un error al intentar iniciar sesión con Google. Por favor, inténtalo de nuevo.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsGoogleLoading(false);
     }
-
-    setIsLoading(true);
-    
-    // Simulación de autenticación
-    setTimeout(() => {
-      // Verificar si es admin (demo purposes)
-      if (formData.email === "admin@empresa.com") {
-        toast({
-          title: "Bienvenido Administrador",
-          description: "Acceso al panel de administración concedido.",
-        });
-        navigate("/admin-dashboard");
-      } else {
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido al portal de tickets.",
-        });
-        navigate("/my-tickets");
-      }
-      
-      setIsLoading(false);
-    }, 1500);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Después de login exitoso
+    const { user, role } = await getUserRoleFromSession();
+
+    toast({
+      title: `Bienvenido ${role === 'admin' ? 'Administrador' : 'Usuario'}`,
+      description: role === 'admin'
+        ? "Acceso al panel de administración concedido."
+        : "Bienvenido al portal de tickets.",
+    });
+
+    navigate(role === 'admin' ? "/admin-dashboard" : "/my-tickets");
+  };
+
+  useEffect(() => {
+    // Verificar si ya está autenticado
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+
+        const role = roleData?.role || 'user';
+        navigate(role === 'admin' ? '/admin-dashboard' : '/my-tickets', { replace: true });
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Ticket className="h-8 w-8 text-primary" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-primary/20 rounded-lg">
+                  <img className="w-36 h-36 -mb-2" src="favicon.ico" alt="" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Sistema de Tickets</h1>
+                  <p className="text-gray-400">Portal de Acceso</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Sistema de Tickets</h1>
-              <p className="text-muted-foreground">Portal de Acceso</p>
+
+            {/* Login Card */}
+            <Card className="shadow-lg border-gray-700 bg-gray-800">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-xl text-white text-center">Iniciar Sesión</CardTitle>
+                <CardDescription className="text-gray-400 text-center">
+                  Usa tu cuenta de Google para acceder al sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                  className="w-full h-12 text-base font-medium bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:border-gray-500"
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FcGoogle className="mr-2 h-5 w-5" />
+                  )}
+                  Iniciar con Google
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Footer */}
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-400">
+                ¿Problemas para iniciar sesión? Contacta a soporte técnico
+              </p>
             </div>
           </div>
         </div>
-
-        {/* Formulario de Login */}
-        <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-xl text-card-foreground text-center">Iniciar Sesión</CardTitle>
-            <CardDescription className="text-center">
-              Ingresa tus credenciales para acceder al sistema
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Correo Electrónico
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@empresa.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="h-12"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Contraseña
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="h-12 pr-10"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 text-base font-medium mt-6"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Verificando...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Iniciar Sesión
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {/* Demo Info */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo:</strong><br/>
-                Admin: admin@empresa.com<br/>
-                Usuario: cualquier@email.com<br/>
-                Contraseña: cualquiera
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-muted-foreground">
-            ¿Olvidaste tu contraseña? Contacta a soporte técnico
-          </p>
-        </div>
-      </div>
-    </div>
   );
 };
 

@@ -1,34 +1,47 @@
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthWrapper } from './pages/AuthWrapper';
+import { Toaster } from '@/components/ui/toaster';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
+import MyTickets from './pages/MyTickets';
+import NotFound from './pages/NotFound';
+import CreateTicketPage from './pages/CreateTIcket';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import AdminDashboard from "./pages/AdminDashboard";
-import MyTickets from "./pages/MyTickets";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+// Componente para rutas protegidas
+const ProtectedRoute = () => {
+  return (
+    <AuthWrapper>
+      <Outlet />
+    </AuthWrapper>
+  );
+};
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <Toaster />
-      <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/my-tickets" element={<MyTickets />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Rutas protegidas */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+            <Route path="/my-tickets/*" element={<MyTickets />} />
+            <Route path="/create-ticket" element={<CreateTicketPage />} />
+            <Route path="/" element={<Navigate to="/my-tickets" replace />} />
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;
