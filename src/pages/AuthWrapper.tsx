@@ -15,8 +15,18 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     const roleCheckInProgress = useRef(false);
 
     useEffect(() => {
+        const hash = window.location.hash;
+        if (hash.includes('access_token')) {
+            supabase.auth.getSession().then(() => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+        }
+    }, []);
+
+    useEffect(() => {
         let mounted = true;
         let authListener: { subscription: any } | null = null;
+        
 
         const checkUser = async () => {
             if (roleCheckInProgress.current) return;
