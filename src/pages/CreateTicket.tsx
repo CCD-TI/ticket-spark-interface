@@ -10,7 +10,7 @@ import { Ticket, Users, ArrowLeft, Send, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createTicket, getCurrentUser } from "@/lib/supabase";
 
-const CreateTicketPage = () => {
+const CreateTIcketPage = () => {
   const [formData, setFormData] = useState({
     nombre_usuario: "",
     cargo_id: "",
@@ -335,4 +335,4 @@ const CreateTicketPage = () => {
   );
 };
 
-export default CreateTicketPage;
+export default CreateTIcketPage;
