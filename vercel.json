@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+      {
+        "source": "/(admin-dashboard|my-tickets|create-ticket|login)/:path*",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/",
+        "destination": "/index.html"
+      }
+    ]
+}

@@ -1,4 +1,3 @@
-// src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthWrapper } from './pages/AuthWrapper';
 import { Toaster } from '@/components/ui/toaster';
@@ -7,7 +6,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import MyTickets from './pages/MyTickets';
 import NotFound from './pages/NotFound';
-import CreateTIcketPage from './pages/CreateTicket';
+import CreateTIcketPage from './pages/CreateTIcket';
 
 
 const queryClient = new QueryClient();
