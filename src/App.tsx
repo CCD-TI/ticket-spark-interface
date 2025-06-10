@@ -7,7 +7,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import MyTickets from './pages/MyTickets';
 import NotFound from './pages/NotFound';
-import CreateTIcketPage from './pages/CreateTIcket';
+import CreateTIcketPage from './pages/CreateTicket';
 
 
 const queryClient = new QueryClient();
