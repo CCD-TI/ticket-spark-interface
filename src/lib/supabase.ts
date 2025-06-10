@@ -1,4 +1,4 @@
-import { ITicket } from '@/types/Ticket';
+import { ITicket } from '@/types/ticket';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
