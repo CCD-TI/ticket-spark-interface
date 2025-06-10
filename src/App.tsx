@@ -7,7 +7,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import MyTickets from './pages/MyTickets';
 import NotFound from './pages/NotFound';
-import CreateTicketPage from './pages/CreateTIcket';
+import CreateTIcketPage from './pages/CreateTIcket';
 
 
 const queryClient = new QueryClient();
@@ -33,7 +33,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
             <Route path="/my-tickets/*" element={<MyTickets />} />
-            <Route path="/create-ticket" element={<CreateTicketPage />} />
+            <Route path="/create-ticket" element={<CreateTIcketPage />} />
             <Route path="/" element={<Navigate to="/my-tickets" replace />} />
           </Route>
           
