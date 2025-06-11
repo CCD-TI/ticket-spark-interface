@@ -1,23 +1,24 @@
-import { supabase } from "./supabase";
+import { supabase, getCurrentUser, getUserRole } from './supabase';
+import { User } from '@supabase/supabase-js';
 
-// src/lib/auth.ts
-export const getUserRoleFromSession = async () => {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
-    if (sessionError || !session) {
-      return { user: null, role: null, error: sessionError || new Error("No session found") };
-    }
-  
-    const user = session.user;
-  
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle();
-  
-    const role = roleData?.role || null;
-  
-    return { user, role, error: roleError };
+type UserRoleResponse = {
+  user: User | null;
+  role: string | null;
+  area_id: string | null;
+  error: any;
+};
+
+export const getUserRoleFromSession = async (): Promise<UserRoleResponse> => {
+  const { data: userData, error: userError } = await getCurrentUser();
+  if (userError || !userData) {
+    return { user: null, role: null, area_id: null, error: userError ?? new Error('No user') };
+  }
+
+  const { role, area_id, error: roleError } = await getUserRole(userData.id);
+  return {
+    user: userData,
+    role,
+    area_id,
+    error: roleError,
   };
-  
+};

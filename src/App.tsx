@@ -1,18 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthWrapper } from './pages/AuthWrapper';
-import { Toaster } from '@/components/ui/toaster';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Login from './pages/Login';
-import AdminDashboard from './pages/AdminDashboard';
-import MyTickets from './pages/MyTickets';
-import NotFound from './pages/NotFound';
-import CreateTicketPage from './pages/CreateTicket';
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import Login from "./pages/Login";
+import MyTickets from "./pages/MyTickets";
+import CreateTicketPage from "./pages/CreateTicket";
+import AdminDashboard from "./pages/AdminDashboard";
+import NotFound from "./pages/NotFound";
+import { AuthWrapper } from "./pages/AuthWrapper";
+import WorkerDashboard from "./pages/WorkerDashboard";
 
-
-
-const queryClient = new QueryClient();
-
-// Componente para rutas protegidas
 const ProtectedRoute = () => {
   return (
     <AuthWrapper>
@@ -21,6 +18,7 @@ const ProtectedRoute = () => {
   );
 };
 
+const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -29,9 +27,10 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           
-          {/* Rutas protegidas */}
+          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+            <Route path="/worker-dashboard/*" element={<WorkerDashboard />} /> {/* New */}
             <Route path="/my-tickets/*" element={<MyTickets />} />
             <Route path="/create-ticket" element={<CreateTicketPage />} />
             <Route path="/" element={<Navigate to="/my-tickets" replace />} />

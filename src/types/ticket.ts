@@ -1,38 +1,58 @@
-export type Priority = "low" | "medium" | "high";
+export type Priority = 'low' | 'medium' | 'high';
 
-// Respuesta de un admin al ticket (opcional)
 export interface TicketResponse {
-  id?: string;
-  ticket_id?: string;
-  user_id?: string; // puedes ajustarlo si tienes el nombre directamente
+  id: string;
+  ticket_id: string;
+  user_id: string;
   mensaje: string;
-  created_at?: string; // podrías omitirlo si no lo usas
+  created_at: string;
 }
 
-// Estructura de un ticket (ajustada al backend y al frontend)
-interface Proyecto {
+export interface Proyecto {
   id: number;
   nombre: string;
-  [key: string]: any;
 }
 
-interface TipoProblema {
+export interface TipoProblema {
   id: number;
   nombre: string;
-  [key: string]: any;
+}
+
+export interface Areas {
+  id: number;
+  nombre: string;
 }
 
 export interface ITicket {
   id: string;
-  asunto: string;
-  descripcion: string;
-  tipo_problema_id: number | TipoProblema;
-  proyecto_id: number | Proyecto;
-  status: string;
-  priority?: Priority;
-  created_at: string; // ISO string
-  response?: string;
-  responded_at?: string;
   user_id: string;
-  ticket_responses?: TicketResponse[];
+  nombre_usuario: string | null;
+  proyecto_id: Proyecto | null;
+  tipo_problema_id: TipoProblema;
+  area_id: Areas;
+  asunto: string;
+  descripcion: string | null;
+  status: 'open' | 'in_progress' | 'closed';
+  priority: Priority;
+  visto: boolean;
+  created_at: string;
+  responded_at: string | null;
+  ticket_responses: TicketResponse[];
 }
+
+
+export interface TicketInsert {
+  user_id: string;
+  nombre_usuario: string | null;
+  proyecto_id: number | null;
+  tipo_problema_id: number;
+  area_id: number;
+  asunto: string;
+  descripcion: string | null;
+  status: 'open' | 'in_progress' | 'closed';
+  priority: Priority;
+  visto: boolean;
+  created_at: string;
+  responded_at: string | null;
+}
+

@@ -1,119 +1,100 @@
-// src/pages/AuthWrapper.tsx
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
-import { getUserRoleFromSession } from '@/lib/auth';
 
-// Rutas públicas que no requieren autenticación
 const publicPaths = ['/login'];
 
-export function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
-    const location = useLocation();
-    const roleCheckInProgress = useRef(false);
+interface AuthWrapperProps {
+  children: React.ReactNode;
+}
 
-    useEffect(() => {
-        const hash = window.location.hash;
-        if (hash.includes('access_token')) {
-            supabase.auth.getSession().then(() => {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            });
+export function AuthWrapper({ children }: AuthWrapperProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isPublicPath = publicPaths.includes(location.pathname);
+
+        if (!session && !isPublicPath) {
+          navigate('/login', {
+            replace: true,
+            state: { from: location.pathname },
+          });
+          return;
         }
-    }, []);
 
-    useEffect(() => {
-        let mounted = true;
-        let authListener: { subscription: any } | null = null;
-        
+        if (session) {
+          const { data: roleData, error } = await supabase
+            .from('user_roles')
+            .select('role, area_id')
+            .eq('user_id', session.user.id)
+            .single();
 
-        const checkUser = async () => {
-            if (roleCheckInProgress.current) return;
+          if (error) throw error;
 
-            try {
-                roleCheckInProgress.current = true;
+          const role = roleData?.role ?? 'user';
+          const redirectPath =
+            role === 'admin' ? '/admin-dashboard' :
+            role === 'trabajador' ? '/worker-dashboard' :
+            '/my-tickets';
 
-                if (publicPaths.includes(location.pathname)) {
-                    if (mounted) setLoading(false);
-                    return;
-                }
+          const rolePaths: Record<string, string[]> = {
+            admin: ['/admin-dashboard', '/create-ticket'],
+            trabajador: ['/worker-dashboard', '/create-ticket'],
+            user: ['/my-tickets', '/create-ticket'],
+          };
+          const allowedPaths = rolePaths[role] ?? [];
+          const isAllowed = allowedPaths.some(path =>
+            location.pathname === path || location.pathname.startsWith(path)
+          );
 
-                const { user, role, error } = await getUserRoleFromSession();
+          if (isPublicPath) {
+            navigate(redirectPath, { replace: true });
+            return;
+          }
 
-                if (!user || error) {
-                    if (mounted) {
-                        navigate('/login', { replace: true, state: { from: location.pathname } });
-                    }
-                    return;
-                }
-
-                if (mounted) {
-                    const rolePaths = {
-                        admin: ['/admin-dashboard', '/create-ticket'],
-                        user: ['/my-tickets', '/create-ticket'],
-                    };
-
-                    const allowedPaths = rolePaths[role] || [];
-                    const isAllowed = allowedPaths.some(path => location.pathname.startsWith(path));
-
-                    if (!isAllowed) {
-                        navigate(allowedPaths[0], { replace: true });
-                        return;
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error en AuthWrapper:', error);
-                if (mounted) {
-                    navigate('/login', { replace: true });
-                }
-            } finally {
-                roleCheckInProgress.current = false;
-                if (mounted) setLoading(false);
-            }
-        };
-
-
-        // Solo ejecutar la verificación si no estamos en una ruta pública
+          if (!isAllowed) {
+            navigate(redirectPath, { replace: true });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('AuthWrapper error:', error);
         if (!publicPaths.includes(location.pathname)) {
-            checkUser();
-        } else {
-            setLoading(false);
+          navigate('/login', { replace: true });
         }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        // Configurar el listener de cambios de autenticación
-        const { data } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                if (!session && !publicPaths.includes(location.pathname)) {
-                    if (mounted) {
-                        navigate('/login', {
-                            replace: true,
-                            state: { from: location.pathname }
-                        });
-                    }
-                } else if (session && !publicPaths.includes(location.pathname)) {
-                    await checkUser();
-                }
-            }
-        );
+    checkAuth();
 
-        authListener = data;
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        checkAuth();
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/login', { replace: true });
+      }
+    });
 
-        return () => {
-            mounted = false;
-            roleCheckInProgress.current = false;
-            authListener?.subscription?.unsubscribe();
-        };
-    }, [navigate, location.pathname]); // Solo dependemos de location.pathname, no de todo el objeto location
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [navigate, location.pathname]);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
-        );
-    }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-    return <>{children}</>;
+  return <>{children}</>;
 }
